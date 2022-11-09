@@ -13,15 +13,16 @@ router.get("/", async (req, res, next) => {
 });
 
 router.get("/:contactId", async (req, res, next) => {
-  res.json({ message: "template message" });
+  res.json(await getContactById(req.params.contactId));
 });
 
 router.post("/", async (req, res, next) => {
-  res.json({ message: "template message" });
+  const { name, email, phone } = req.query;
+  res.json(await addContact({ name, email, phone }));
 });
 
 router.delete("/:contactId", async (req, res, next) => {
-  res.json({ message: "template message" });
+  res.json(await removeContact(req.params.contactId));
 });
 
 router.put("/:contactId", async (req, res, next) => {

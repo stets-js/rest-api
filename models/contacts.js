@@ -56,9 +56,6 @@ const addContact = async ({ name, email, phone }) => {
     const contacts = JSON.parse(data);
     const contactsList = [contactNew, ...contacts];
     await fs.writeFile(contactsPath, JSON.stringify(contactsList));
-    const freshData = await fs.readFile(contactsPath);
-    const freshList = JSON.parse(freshData);
-    return freshList;
   } catch (err) {
     console.error(err.message);
   }
