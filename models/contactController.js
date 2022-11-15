@@ -79,21 +79,17 @@ class ContactController {
   }
 
   async favorite(req, res, next) {
-    const contact = req.body;
-    if (!contact) {
-      res.status(400).json({ message: "missing field favorite" });
-    }
-    const id = req.params.contactId;
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-      res.status(400).json({ message: "Enter ID" });
+    const body = req.body;
+    const contactId = req.params.contactId;
+    if (!body) {
+      res.status(404).json({ message: "missing field favorite" });
     }
 
     try {
-      const updatedContact = await Contact.updateOne(id, contact, {
+      const updatedContact = await Contact.findByIdAndUpdate(contactId, body, {
         new: true,
       });
-      console.log(updatedContact);
-      if (updatedContact.favorite !== null || "") {
+      if (updatedContact) {
         return res.status(200).json(updatedContact);
       }
       res.status(404).json({ message: "Not found" });
