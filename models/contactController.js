@@ -1,5 +1,5 @@
 const isValid = require("mongoose").isValidObjectId;
-const Contact = require("./schema.js");
+const Contact = require("./contactSchema.js");
 
 class ContactController {
   async getAll(req, res, next) {
@@ -14,7 +14,7 @@ class ContactController {
   async getOne(req, res, next) {
     try {
       const id = req.params.contactId;
-      if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      if (!isValid(id)) {
         res.status(400).json({ message: "Enter ID" });
       }
       const contact = await Contact.findById(id);
@@ -42,7 +42,7 @@ class ContactController {
 
   async delete(req, res, next) {
     const id = req.params.contactId;
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!isValid(id)) {
       res.status(400).json({ message: "Enter ID" });
     }
     try {
