@@ -19,7 +19,7 @@ const User = new mongoose.Schema({
   token: String,
 });
 
-User.pre("save", async () => {
+User.pre("save", async function () {
   if (this.isNew) {
     this.password = await bcrypt.hash(this.password, 10);
   }
