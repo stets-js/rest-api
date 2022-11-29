@@ -1,4 +1,5 @@
-const Contact = require("./schema.js");
+const isValid = require("mongoose").isValidObjectId;
+const Contact = require("./contactSchema.js");
 
 class ContactController {
   async getAll(req, res, next) {
@@ -13,11 +14,10 @@ class ContactController {
   async getOne(req, res, next) {
     try {
       const id = req.params.contactId;
-      if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      if (!isValid(id)) {
         res.status(400).json({ message: "Enter ID" });
       }
       const contact = await Contact.findById(id);
-      console.log(contact);
       if (contact === null) {
         res.status(404).json({ message: "Not found" });
       }
@@ -42,7 +42,7 @@ class ContactController {
 
   async delete(req, res, next) {
     const id = req.params.contactId;
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!isValid(id)) {
       res.status(400).json({ message: "Enter ID" });
     }
     try {
@@ -59,12 +59,10 @@ class ContactController {
   async update(req, res, next) {
     const contact = req.body;
     const id = req.params.contactId;
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!isValid(id)) {
       res.status(400).json({ message: "Enter ID" });
+      return;
     }
-    // if (name === undefined || email === undefined || phone === undefined) {
-    //   res.status(400).json({ message: "missing fields" });
-    // }
     try {
       const updatedContact = await Contact.findByIdAndUpdate(id, contact, {
         new: true,
