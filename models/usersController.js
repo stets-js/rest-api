@@ -1,14 +1,17 @@
 // const isValid = require("mongoose").isValidObjectId;
 const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require("uuid");
 const token = require("jsonwebtoken");
 const User = require("./usersSchema.js");
 const joi = require("./validation.js");
 const path = require("path");
 const fs = require("fs/promises");
 const Jimp = require("jimp");
+const sgMail = require("@sendgrid/mail");
+require("dotenv").config();
 
 class UsersController {
-  async create(req, res, next) {
+  async create(req, res) {
     const { email, password } = req.body;
     const isUserAdded = await User.findOne({ email });
     try {
@@ -30,17 +33,37 @@ class UsersController {
       });
       return;
     }
-    const user = new User({ email, password });
+    const verificationToken = uuidv4();
+    const user = new User({ email, password, verificationToken });
     await user.save();
+
+    sgMail.setApiKey(process.env.CONFIRM_EMAIL_TOKEN);
+    const msg = {
+      to: email,
+      from: "d.a.stetsenko@gmail.com",
+      subject: "Verify your account!",
+      text: "Thank you for using our Node.js application",
+      html: `<a target="_blank" href="http://localhost:3000/users/verify/${verificationToken}">Please, verify you email</a>`,
+    };
+    await sgMail
+      .send(msg)
+      .then(() => {
+        console.log("Email sent");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
     res.status(201).json({
       user: {
         email: email,
         subscription: "starter",
+        verificationToken: verificationToken,
       },
     });
   }
 
-  async login(req, res, next) {
+  async login(req, res) {
     const { email, password } = req.body;
     try {
       const body = await joi.validate({
@@ -61,6 +84,12 @@ class UsersController {
       });
       return;
     }
+    // if (!user) {
+    //   res.status(401).json({
+    //     message: "Email or password is wrong",
+    //   });
+    //   return;
+    // }
     if (!(await bcrypt.compare(password, user.password))) {
       res.status(401).json({
         message: "Email or password is wrong",
@@ -84,13 +113,13 @@ class UsersController {
     });
   }
 
-  async logout(req, res, next) {
+  async logout(req, res) {
     const { _id } = req.user;
     await User.findByIdAndUpdate(_id, { token: null });
     res.status(204).json({ message: "No Content" });
   }
 
-  async getCurrent(req, res, next) {
+  async getCurrent(req, res) {
     try {
       const { _id } = req.user;
       const user = await User.findById(_id);
@@ -105,7 +134,7 @@ class UsersController {
     }
   }
 
-  async setAvatar(req, res, next) {
+  async setAvatar(req, res) {
     const avatarsDir = path.join(__dirname, "../", "public", "avatars");
     const { path: tmpUpload, originalname } = req.file;
     const { _id: id } = req.user;
@@ -122,6 +151,24 @@ class UsersController {
     } catch (err) {
       console.log(err);
     }
+  }
+
+  async verificateEmail(req, res) {
+    const { verificationToken } = req.params;
+    const user = await User.findOne({ verificationToken });
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+    }
+    await User.findByIdAndUpdate(user._id, {
+      verify: true,
+      verificationToken: null,
+    });
+
+    res.status(200).json({
+      message: "Verification successful",
+    });
   }
 }
 
