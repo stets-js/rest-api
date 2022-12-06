@@ -37,7 +37,7 @@ class UsersController {
     const user = new User({ email, password, verificationToken });
     await user.save();
 
-    sgMail.setApiKey(process.env.CONFIRM_EMAIL_TOKEN);
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     const msg = {
       to: email,
       from: "d.a.stetsenko@gmail.com",
@@ -84,12 +84,12 @@ class UsersController {
       });
       return;
     }
-    // if (!user) {
-    //   res.status(401).json({
-    //     message: "Email or password is wrong",
-    //   });
-    //   return;
-    // }
+    if (!user.verify) {
+      res.status(401).json({
+        message: "Verify your account",
+      });
+      return;
+    }
     if (!(await bcrypt.compare(password, user.password))) {
       res.status(401).json({
         message: "Email or password is wrong",
@@ -169,6 +169,41 @@ class UsersController {
     res.status(200).json({
       message: "Verification successful",
     });
+  }
+
+  async verificateEmailResend(req, res) {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ message: "missing required field email" });
+    }
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (user.verify) {
+      throw new Error("Verification has already been passed");
+    }
+    const verificationToken = user.verificationToken;
+    const msg = {
+      to: email,
+      from: "d.a.stetsenko@gmail.com",
+      subject: "Verify your account!",
+      text: "Thank you for using our Node.js application",
+      html: `<a target="_blank" href="http://localhost:3000/users/verify/${verificationToken}">Please, verify you email</a>`,
+    };
+    await sgMail
+      .send(msg)
+      .then(() => {
+        console.log("Email sent");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+    res.status(200).json({ message: "Verification email sent" });
   }
 }
 
