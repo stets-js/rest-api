@@ -40,10 +40,10 @@ class UsersController {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     const msg = {
       to: email,
-      from: "d.a.stetsenko@gmail.com",
+      from: `${process.env.SEND_FROM}`,
       subject: "Verify your account!",
       text: "Thank you for using our Node.js application",
-      html: `<a target="_blank" href="http://localhost:3000/users/verify/${verificationToken}">Please, verify you email</a>`,
+      html: `<a target="_blank" href="${process.env.HOST}/users/verify/${verificationToken}">Please, verify you email</a>`,
     };
     await sgMail
       .send(msg)
@@ -190,10 +190,10 @@ class UsersController {
     const verificationToken = user.verificationToken;
     const msg = {
       to: email,
-      from: "d.a.stetsenko@gmail.com",
+      from: `${process.env.SEND_FROM}`,
       subject: "Verify your account!",
       text: "Thank you for using our Node.js application",
-      html: `<a target="_blank" href="http://localhost:3000/users/verify/${verificationToken}">Please, verify you email</a>`,
+      html: `<a target="_blank" href="${process.env.HOST}/users/verify/${verificationToken}">Please, verify you email</a>`,
     };
     await sgMail
       .send(msg)
